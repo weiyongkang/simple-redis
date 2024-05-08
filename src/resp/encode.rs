@@ -181,11 +181,8 @@ mod tests {
     #[test]
     fn test_map_encode() {
         let mut s: RespMap = RespMap::new();
-        s.insert(
-            "hello".to_string(),
-            BulkString::new(b"world".to_vec()).into(),
-        );
-        s.insert("foo".to_string(), (-123456.789).into());
+        s.insert("hello".into(), BulkString::new(b"world".to_vec()).into());
+        s.insert("foo".into(), (-123456.789).into());
         let s: RespFrame = s.into();
         // println!("{}",String::from_utf8_lossy(&s.encode()));
         assert_eq!(

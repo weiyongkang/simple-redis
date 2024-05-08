@@ -1,4 +1,4 @@
-// mod decode;
+mod decode;
 mod encode;
 
 use std::{
@@ -6,15 +6,38 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+use bytes::BytesMut;
 use enum_dispatch::enum_dispatch;
+use thiserror::Error;
+
+#[derive(Debug, Error, PartialEq)]
+pub enum RespError {
+    #[error("Invalid frame: {0}")]
+    InvalidFrame(String),
+
+    #[error("Invalid frame type: {0}")]
+    InvalidFrameType(String),
+
+    #[error("Invalid frame length: {0}")]
+    InvalidFrameLength(isize),
+
+    #[error("Frame not complete")]
+    NotComplete,
+
+    #[error("Invalid UTF-8 string to parse Int error: {0}")]
+    ParseIntError(#[from] std::num::ParseIntError),
+
+    #[error("Invalid UTF-8 string to parse Float error: {0}")]
+    ParseDoubleError(#[from] std::num::ParseFloatError),
+}
 
 #[enum_dispatch]
 pub trait RespEncoder {
     fn encode(self) -> Vec<u8>;
 }
 
-pub trait RespDecoder {
-    fn decode(buf: Self) -> Result<RespFrame, String>;
+pub trait RespDecoder: Sized {
+    fn decode(buf: &mut BytesMut) -> Result<Self, RespError>;
 }
 
 #[derive(Debug, PartialEq, PartialOrd)]
@@ -34,7 +57,7 @@ pub enum RespFrame {
     Set(RespSet),
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, PartialOrd)]
+#[derive(Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Clone)]
 pub struct SimpleString(String);
 #[derive(Debug, PartialEq, Eq, Hash, PartialOrd)]
 pub struct SimpleError(String);
